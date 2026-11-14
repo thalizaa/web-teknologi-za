@@ -21,21 +21,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
-        const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
-          .safeParse(credentials);
+  const parsed = z
+    .object({ email: z.string().email(), password: z.string().min(6) })
+    .safeParse(credentials);
+  console.log('1. validasi lolos:', parsed.success);
+  if (!parsed.success) return null;
 
-        if (parsedCredentials.success) {
-          const { email, password } = parsedCredentials.data;
-          const user = await getUser(email);
-          if (!user) return null;
-          const passwordsMatch = await bcrypt.compare(password, user.password);
+  const { email, password } = parsed.data;
+  const user = await getUser(email);
+  console.log('2. user ketemu:', !!user);
+  if (!user) return null;
 
-          if (passwordsMatch) return user;
-        }
+  const match = await bcrypt.compare(password, user.password);
+  console.log('3. password cocok:', match);
+  if (match) return user;
 
-        return null;
-      },
+  return null;
+},
     }),
   ],
 });
